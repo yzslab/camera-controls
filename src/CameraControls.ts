@@ -321,6 +321,12 @@ export class CameraControls extends EventDispatcher {
 	noVerticalDragToForwardMouseButtons = 0;
 
 	/**
+	 * The touch that disable verticalDragToForward.
+	 * @category Properties
+	 */
+	noVerticalDragToForwardTouches = - 1;
+
+	/**
 	 * Friction ratio of the boundary.
 	 * @category Properties
 	 */
@@ -737,6 +743,12 @@ export class CameraControls extends EventDispatcher {
 
 						this._state = this.touches.three;
 						break;
+
+				}
+
+				if ( this._activePointers.length === this.noVerticalDragToForwardTouches ) {
+
+					noVerticalDragToForward = true;
 
 				}
 
