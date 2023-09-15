@@ -274,6 +274,12 @@ export class CameraControls extends EventDispatcher {
 	dollySpeed = 1.0;
 
 	/**
+	 * Minimum speed of mouse-wheel dollying.
+	 * @category Properties
+	 */
+	minDollySpeed = 0.0;
+
+	/**
 	 * `true` to invert direction when dollying or zooming via drag
 	 * @category Properties
 	 */
@@ -284,6 +290,12 @@ export class CameraControls extends EventDispatcher {
 	 * @category Properties
 	 */
 	truckSpeed = 2.0;
+
+	/**
+	 * Minimum speed of drag for truck and pedestal.
+	 * @category Properties
+	 */
+	minTruckSpeed = 0.0;
 
 	/**
 	 * `true` to enable Dolly-in to the mouse cursor coords.
@@ -3164,9 +3176,18 @@ export class CameraControls extends EventDispatcher {
 		if ( isPerspectiveCamera( this._camera ) ) {
 
 			const offset = _v3A.copy( this._camera.position ).sub( this._target );
+			const normalizedOffset = _v3B.copy( offset ).normalize();
+
+			let cameraOffsetLength = offset.length();
+			if ( cameraOffsetLength < normalizedOffset.length() * this.minTruckSpeed ) {
+
+				cameraOffsetLength = normalizedOffset.length() * this.minTruckSpeed;
+
+			}
+
 			// half of the fov is center to top of screen
 			const fov = this._camera.getEffectiveFOV() * DEG2RAD;
-			const targetDistance = offset.length() * Math.tan( fov * 0.5 );
+			const targetDistance = cameraOffsetLength * Math.tan( fov * 0.5 );
 
 			truckX    = ( this.truckSpeed * deltaX * targetDistance / this._elementRect.height );
 			pedestalY = ( this.truckSpeed * deltaY * targetDistance / this._elementRect.height );
@@ -3224,7 +3245,15 @@ export class CameraControls extends EventDispatcher {
 
 		const dollyScale = Math.pow( 0.95, - delta * this.dollySpeed );
 		const lastDistance = this._sphericalEnd.radius;
-		const distance = this._sphericalEnd.radius * dollyScale;
+		let distance = this._sphericalEnd.radius * dollyScale;
+
+		// TODO: only support maxDistance === Infinity currently
+		if ( dollyScale > 1 && distance - lastDistance < this.minDollySpeed ) {
+
+			distance = lastDistance + this.minDollySpeed;
+
+		}
+
 		const clampedDistance = clamp( distance, this.minDistance, this.maxDistance );
 		const overflowedDistance = clampedDistance - distance;
 
