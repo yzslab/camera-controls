@@ -144,6 +144,16 @@ export class CameraControls extends EventDispatcher {
 	}
 
 	/**
+	 * list all MOUSE_BUTTONs
+	 * @category Statics
+	 */
+	static get MOUSE_BUTTON(): typeof MOUSE_BUTTON {
+
+		return MOUSE_BUTTON;
+
+	}
+
+	/**
 	 * Minimum vertical angle in radians.  
 	 * The angle has to be between `0` and `.maxPolarAngle` inclusive.  
 	 * The default value is `0`.
@@ -291,6 +301,12 @@ export class CameraControls extends EventDispatcher {
 	 * @category Properties
 	 */
 	verticalDragToForward = false;
+
+	/**
+	 * The keys that disable verticalDragToForward.
+	 * @category Properties
+	 */
+	noVerticalDragToForwardMouseButtons = 0;
 
 	/**
 	 * Friction ratio of the boundary.
@@ -689,6 +705,8 @@ export class CameraControls extends EventDispatcher {
 
 			this._state = 0;
 
+			let noVerticalDragToForward = false;
+
 			if ( event.pointerType === 'touch' ) {
 
 				switch ( this._activePointers.length ) {
@@ -733,9 +751,15 @@ export class CameraControls extends EventDispatcher {
 
 				}
 
+				if ( event.buttons & this.noVerticalDragToForwardMouseButtons ) {
+
+					noVerticalDragToForward = true;
+
+				}
+
 			}
 
-			dragging();
+			dragging( noVerticalDragToForward );
 
 		};
 
@@ -1110,7 +1134,7 @@ export class CameraControls extends EventDispatcher {
 
 		};
 
-		const dragging = (): void => {
+		const dragging = ( noVerticalDragToForward: boolean = false ): void => {
 
 			if ( ! this._enabled ) return;
 
@@ -1206,7 +1230,7 @@ export class CameraControls extends EventDispatcher {
 				( this._state & ACTION.TOUCH_ZOOM_TRUCK ) === ACTION.TOUCH_ZOOM_TRUCK
 			) {
 
-				this._truckInternal( deltaX, deltaY, false );
+				this._truckInternal( deltaX, deltaY, false, noVerticalDragToForward );
 				this._isUserControllingTruck = true;
 
 			}
@@ -3132,7 +3156,7 @@ export class CameraControls extends EventDispatcher {
 
 	}
 
-	protected _truckInternal = ( deltaX: number, deltaY: number, dragToOffset: boolean ): void => {
+	protected _truckInternal = ( deltaX: number, deltaY: number, dragToOffset: boolean, noVerticalDragToForward: boolean = false ): void => {
 
 		let truckX: number;
 		let pedestalY: number;
@@ -3160,7 +3184,7 @@ export class CameraControls extends EventDispatcher {
 
 		}
 
-		if ( this.verticalDragToForward ) {
+		if ( this.verticalDragToForward && ! noVerticalDragToForward ) {
 
 			dragToOffset ?
 				this.setFocalOffset(
