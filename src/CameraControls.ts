@@ -205,6 +205,18 @@ export class CameraControls extends EventDispatcher {
 	 */
 	maxAzimuthAngle = Infinity; // radians
 
+	/**
+	 * Minimum Z Value.
+	 *
+	 * e.g.
+	 * ```
+	 * cameraControls.minZValue = 0;
+	 * ```
+	 * @category Properties
+	 */
+	minZValue = - Infinity;
+
+
 	// How far you can dolly in and out ( PerspectiveCamera only )
 	/**
 	 * Minimum distance for dolly. The value must be higher than `0`. Default is `Number.EPSILON`.  
@@ -1986,6 +1998,8 @@ export class CameraControls extends EventDispatcher {
 	 */
 	moveTo( x: number, y: number, z: number, enableTransition: boolean = false ): Promise<void> {
 
+		z = clamp( z, this.minZValue, Infinity );
+
 		this._isUserControllingTruck = false;
 
 		const offset = _v3A.set( x, y, z ).sub( this._targetEnd );
@@ -2799,6 +2813,7 @@ export class CameraControls extends EventDispatcher {
 
 				// target position may be moved beyond boundary.
 				this._boundary.clampPoint( newTargetEnd, newTargetEnd );
+				newTargetEnd.z = clamp( newTargetEnd.z, this.minZValue, Infinity );
 				const targetEndDiff = _v3B.subVectors( newTargetEnd, this._targetEnd );
 				this._targetEnd.copy( newTargetEnd );
 				this._target.add( targetEndDiff );
@@ -2865,6 +2880,18 @@ export class CameraControls extends EventDispatcher {
 		// decompose spherical to the camera position
 		this._spherical.makeSafe();
 		this._camera.position.setFromSpherical( this._spherical ).applyQuaternion( this._yAxisUpSpaceInverse ).add( this._target );
+		// this._camera.position.z = clamp( this._camera.position.z, this.minZValue, Infinity );
+
+		if ( this._camera.position.z < this.minZValue ) {
+
+			const position = _v3B.copy( this._camera.position );
+			position.z = clamp( position.z, this.minZValue, Infinity );
+			this._sphericalEnd.setFromVector3( position.sub( this._target ).applyQuaternion( this._yAxisUpSpace ) );
+			this._spherical.copy( this._sphericalEnd );
+			this._needsUpdate = true;
+
+		}
+
 		this._camera.lookAt( this._target );
 
 		// set offset after the orbit movement
