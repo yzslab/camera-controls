@@ -3159,7 +3159,7 @@ export class CameraControls extends EventDispatcher {
 		const lastDistance = this._sphericalEnd.radius;
 		let distance = this._sphericalEnd.radius * dollyScale;
 
-		if ( dollyScale > 1 && distance - lastDistance < this.minDollySpeed && this.maxDistance === Infinity ) {
+		if ( dollyScale > 1 && distance - lastDistance < this.minDollySpeed ) {
 
 			distance = lastDistance + this.minDollySpeed;
 
